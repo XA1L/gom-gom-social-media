@@ -3,639 +3,1281 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Mini Sosyal Medya Prototipi</title>
+<title>GOM GOM - Mini Instagram</title>
 <style>
-  body { font-family: Arial, sans-serif; background: #f0f2f5; margin:0; padding:0; }
-  header { background: #1877f2; color: white; padding: 15px; text-align: center; font-size: 24px; }
-  #auth, #app { max-width: 700px; margin: 20px auto; background: white; border-radius: 8px; padding: 15px; box-shadow: 0 0 10px #ccc;}
-  input, button, textarea, select { width: 100%; padding: 8px; margin: 8px 0; box-sizing: border-box; font-size: 16px; }
-  button { background: #1877f2; color: white; border: none; border-radius: 4px; cursor: pointer; }
-  button:hover { background: #155db2; }
-  nav { margin-bottom: 15px; }
-  nav button { width: auto; padding: 8px 16px; margin-right: 8px; }
-  .profile-pic { width: 70px; height: 70px; border-radius: 50%; object-fit: cover; border: 2px solid #1877f2; }
-  .post { border: 1px solid #ddd; margin-bottom: 15px; border-radius: 6px; padding: 10px; background: #fff; }
-  .post-header { display: flex; align-items: center; margin-bottom: 10px; }
-  .post-header img { margin-right: 10px; }
-  .post-content img { max-width: 100%; margin-top: 10px; border-radius: 6px; }
-  .btn-like, .btn-comment { cursor: pointer; color: #555; margin-right: 10px; }
-  .btn-like.liked { color: #e0245e; font-weight: bold; }
-  .comments { margin-top: 10px; padding-left: 20px; }
-  .comment { margin-bottom: 8px; border-left: 2px solid #ddd; padding-left: 8px; }
-  .reply { margin-left: 15px; border-left: 2px solid #eee; padding-left: 8px; font-size: 14px; color: #555; }
-  .message-list { max-height: 300px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; background: #fff; margin-bottom: 10px; border-radius: 6px; }
-  .message { margin-bottom: 8px; }
-  .message.self { text-align: right; }
-  small { color: #999; }
-  .verified { color: #3897f0; font-weight: bold; margin-left: 6px; }
-  .error { color: red; }
-  .success { color: green; }
+  /* Reset ve genel */
+  * {
+    box-sizing: border-box;
+  }
+  body,html {
+    margin:0; padding:0; height: 100%;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background:#fafafa;
+  }
+  a {
+    text-decoration:none; color:inherit; cursor:pointer;
+  }
+  /* --- Üst bar --- */
+  header {
+    background:#fff;
+    border-bottom: 1px solid #dbdbdb;
+    height: 60px;
+    display:flex;
+    align-items:center;
+    justify-content: center;
+    font-size: 24px;
+    font-weight: 600;
+    color: #262626;
+    position: fixed;
+    top: 0; left:0; right:0;
+    z-index: 100;
+  }
+  /* --- Ana konteyner --- */
+  #container {
+    display: flex;
+    max-width: 1200px;
+    margin: 70px auto 20px auto;
+    padding: 0 15px;
+    gap: 20px;
+    min-height: 80vh;
+  }
+  /* --- Sol panel: reels ve arama --- */
+  #leftPanel {
+    width: 300px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  /* Arama */
+  #searchBox input {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid #dbdbdb;
+    font-size: 16px;
+  }
+  #userSearchResults {
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid #dbdbdb;
+    background: white;
+    border-radius: 8px;
+  }
+  #userSearchResults div {
+    padding: 8px 12px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+  }
+  #userSearchResults div:hover {
+    background: #fafafa;
+  }
+  #userSearchResults img {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+  /* Reels */
+  #reels {
+    background: white;
+    border-radius: 8px;
+    border: 1px solid #dbdbdb;
+    padding: 10px;
+    height: 400px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  #reels h3 {
+    margin: 0 0 10px 0;
+    font-weight: 600;
+    font-size: 18px;
+  }
+  .reel-item {
+    width: 100%;
+    height: 120px;
+    background: #ddd;
+    border-radius: 8px;
+    overflow: hidden;
+    cursor: pointer;
+    position: relative;
+  }
+  .reel-item video, .reel-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .reel-caption {
+    position: absolute;
+    bottom: 6px;
+    left: 6px;
+    color: white;
+    font-weight: 600;
+    text-shadow: 0 0 4px rgba(0,0,0,0.6);
+  }
+
+  /* --- Orta panel: içerik akışı ve profil --- */
+  #mainPanel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  /* Menü bar */
+  #mainNav {
+    background: white;
+    border-radius: 8px;
+    border: 1px solid #dbdbdb;
+    padding: 10px;
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+  }
+  #mainNav button {
+    border:none;
+    background:none;
+    padding: 8px 16px;
+    font-weight: 600;
+    color: #262626;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: background-color 0.2s ease;
+  }
+  #mainNav button:hover, #mainNav button.active {
+    background: #efefef;
+  }
+
+  /* Akış gönderi kartları */
+  .post-card {
+    background: white;
+    border-radius: 12px;
+    border: 1px solid #dbdbdb;
+    padding: 10px;
+    box-shadow: 0 2px 5px rgb(0 0 0 / 0.05);
+  }
+  .post-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .post-header img {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+  .post-user {
+    font-weight: 700;
+    font-size: 16px;
+    color: #262626;
+  }
+  .verified {
+    color: #3897f0;
+    font-weight: 700;
+    margin-left: 4px;
+    font-size: 18px;
+  }
+  .post-time {
+    margin-left: auto;
+    color: #999;
+    font-size: 12px;
+  }
+  .post-content {
+    margin: 12px 0;
+    font-size: 15px;
+    white-space: pre-wrap;
+  }
+  .post-image {
+    width: 100%;
+    max-height: 400px;
+    object-fit: contain;
+    border-radius: 12px;
+    cursor: pointer;
+  }
+  .post-actions {
+    display: flex;
+    gap: 15px;
+    font-size: 18px;
+    user-select: none;
+  }
+  .post-actions span {
+    cursor: pointer;
+    color: #555;
+    transition: color 0.2s ease;
+  }
+  .post-actions span.liked {
+    color: #e0245e;
+    font-weight: 700;
+  }
+  .comments-section {
+    margin-top: 10px;
+  }
+  .comment {
+    font-size: 14px;
+    margin-bottom: 6px;
+    border-left: 3px solid #ddd;
+    padding-left: 8px;
+    word-wrap: break-word;
+  }
+  .comment strong {
+    font-weight: 600;
+  }
+  .comment .reply {
+    margin-left: 20px;
+    font-size: 13px;
+    color: #555;
+  }
+
+  /* Yorum alanı */
+  .comment-add {
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .comment-add textarea {
+    resize: none;
+    width: 100%;
+    border-radius: 8px;
+    border: 1px solid #dbdbdb;
+    padding: 8px;
+    font-size: 14px;
+  }
+  .comment-add button {
+    align-self: flex-end;
+    background: #3897f0;
+    color: white;
+    font-weight: 600;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  .comment-add button:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+
+  /* Yeni gönderi formu */
+  #newPostForm {
+    background: white;
+    border-radius: 12px;
+    border: 1px solid #dbdbdb;
+    padding: 10px;
+  }
+  #newPostForm textarea {
+    width: 100%;
+    resize: vertical;
+    border-radius: 12px;
+    border: 1px solid #dbdbdb;
+    padding: 10px;
+    font-size: 15px;
+  }
+  #newPostForm input[type="file"] {
+    margin-top: 10px;
+  }
+  #newPostForm button {
+    margin-top: 10px;
+    background: #3897f0;
+    color: white;
+    border:none;
+    border-radius: 12px;
+    padding: 10px 16px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  #newPostForm button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  /* Profil sayfası */
+  #profilePage {
+    background: white;
+    border-radius: 12px;
+    border: 1px solid #dbdbdb;
+    padding: 20px;
+  }
+  #profilePage-header {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+  #profilePage-header img {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+  #profilePage-header h2 {
+    font-weight: 700;
+    font-size: 24px;
+  }
+  #profilePage-header .verified {
+    font-size: 26px;
+    margin-left: 8px;
+    vertical-align: middle;
+  }
+  #profileBio {
+    font-size: 16px;
+    white-space: pre-wrap;
+    margin-bottom: 15px;
+  }
+  #profileStats {
+    display: flex;
+    gap: 20px;
+    font-weight: 600;
+    font-size: 16px;
+    color: #555;
+  }
+  #profileEditBtn {
+    margin-top: 10px;
+    background: #3897f0;
+    color: white;
+    border:none;
+    border-radius: 10px;
+    padding: 8px 16px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  #profileEditForm {
+    margin-top: 15px;
+    display: none;
+    flex-direction: column;
+    gap: 12px;
+  }
+  #profileEditForm textarea, #profileEditForm input[type="password"] {
+    font-size: 15px;
+    padding: 8px;
+    border-radius: 10px;
+    border: 1px solid #dbdbdb;
+    width: 100%;
+  }
+  #profileEditForm input[type="file"] {
+    border: none;
+  }
+  #profileEditForm button {
+    width: fit-content;
+    background: #3897f0;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 8px 16px;
+    cursor: pointer;
+  }
+  #verifyBtnProfile {
+    margin-left: 10px;
+    background: #3897f0;
+    color: white;
+    border:none;
+    border-radius: 6px;
+    padding: 6px 12px;
+    cursor: pointer;
+  }
+
+  /* Mesajlar sayfası */
+  #messagesPage {
+    background: white;
+    border-radius: 12px;
+    border: 1px solid #dbdbdb;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  #messageUserSelect {
+    width: 100%;
+    padding: 10px;
+    font-size: 16px;
+    border-radius: 8px;
+    border: 1px solid #dbdbdb;
+  }
+  #messageList {
+    height: 300px;
+    overflow-y: auto;
+    border: 1px solid #dbdbdb;
+    border-radius: 8px;
+    padding: 10px;
+    background: #fafafa;
+  }
+  .message {
+    padding: 6px 10px;
+    margin-bottom: 8px;
+    border-radius: 10px;
+    max-width: 80%;
+    word-wrap: break-word;
+  }
+  .message.self {
+    background: #3897f0;
+    color: white;
+    margin-left: auto;
+  }
+  .message.other {
+    background: #eee;
+  }
+  #messageInput {
+    width: 100%;
+    resize: vertical;
+    font-size: 15px;
+    border-radius: 8px;
+    border: 1px solid #dbdbdb;
+    padding: 8px;
+  }
+  #sendMessageBtn {
+    background: #3897f0;
+    border:none;
+    color: white;
+    font-weight: 600;
+    padding: 10px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-top: 6px;
+  }
+  #sendMessageBtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  /* Responsive */
+  @media (max-width: 900px) {
+    #container {
+      flex-direction: column;
+      margin: 70px 10px 20px 10px;
+    }
+    #leftPanel {
+      width: 100%;
+      flex-direction: row;
+      overflow-x: auto;
+      gap: 10px;
+      height: 140px;
+    }
+    #reels {
+      flex: 1;
+      height: 120px;
+      padding: 0;
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      border-radius: 0;
+      border: none;
+    }
+    .reel-item {
+      width: 120px;
+      height: 120px;
+      border-radius: 8px;
+    }
+    #searchBox {
+      flex: 1;
+    }
+  }
 </style>
 </head>
 <body>
 
 <header>GOM GOM</header>
 
-<div id="auth">
-  <h2>Kayıt / Giriş</h2>
-  <input type="text" id="username" placeholder="Kullanıcı adı (benzersiz)" />
-  <input type="password" id="password" placeholder="Şifre (en az 8 karakter, harf ve sayı)" />
-  <button onclick="register()">Kayıt Ol</button>
-  <button onclick="login()">Giriş Yap</button>
-  <p id="auth-msg" class="error"></p>
-</div>
+<div id="container">
 
-<div id="app" style="display:none;">
-  <nav>
-    <button onclick="showFeed('following')">Takip Ettiklerim</button>
-    <button onclick="showFeed('global')">Global Akış</button>
-    <button onclick="showProfile(currentUser)">Profilim</button>
-    <button onclick="showUsers()">Kullanıcılar</button>
-    <button onclick="showMessages()">Mesajlar</button>
-    <button onclick="logout()">Çıkış</button>
-  </nav>
-
-  <div id="feed"></div>
-
-  <div id="profile" style="display:none;">
-    <h3>Profil: <span id="profileName"></span></h3>
-    <img id="profilePic" class="profile-pic" src="https://via.placeholder.com/70?text=Profil" alt="Profil Foto" />
-    <input type="file" id="profilePicInput" accept="image/*" onchange="changeProfilePic(event)" />
-    <textarea id="bio" placeholder="Biyografi" rows="3"></textarea>
-    <input type="password" id="newPassword" placeholder="Yeni Şifre (değiştirmek için)" />
-    <button onclick="saveProfile()">Profili Kaydet</button>
-    <button id="verifyBtn" style="display:none;" onclick="">Mavi Tik Ver</button>
+  <!-- Sol Panel: Arama + Reels -->
+  <div id="leftPanel">
+    <div id="searchBox">
+      <input type="text" placeholder="Kullanıcı Ara..." id="searchInput" autocomplete="off" />
+      <div id="userSearchResults" style="display:none;"></div>
+    </div>
+    <div id="reels">
+      <h3>Reels</h3>
+      <!-- Reels öğeleri JS ile gelecek -->
+    </div>
   </div>
 
-  <div id="users" style="display:none;">
-    <h3>Kullanıcılar</h3>
-    <div id="userList"></div>
-  </div>
+  <!-- Orta Panel: Akış, Profil, Mesajlar -->
+  <div id="mainPanel">
 
-  <div id="messages" style="display:none;">
-    <h3>Mesajlar</h3>
-    <select id="chatUserSelect" onchange="loadChat(this.value)">
-      <option value="">Kullanıcı Seç</option>
-    </select>
-    <div class="message-list" id="messageList"></div>
-    <textarea id="messageInput" placeholder="Mesaj yaz..." rows="3"></textarea>
-    <button onclick="sendMessage()">Gönder</button>
+    <nav id="mainNav">
+      <button id="btnFeedFollowing" class="active" onclick="showFeed('following')">Takip Ettiklerim</button>
+      <button id="btnFeedGlobal" onclick="showFeed('global')">Global Akış</button>
+      <button id="btnProfile" onclick="showProfile(currentUser)">Profilim</button>
+      <button id="btnMessages" onclick="showMessages()">Mesajlar</button>
+      <button id="btnLogout" onclick="logout()">Çıkış</button>
+    </nav>
+
+    <!-- İçerik Alanı -->
+    <div id="feed"></div>
+
+    <div id="profilePage" style="display:none;">
+      <div id="profilePage-header">
+        <img id="profilePic" src="https://via.placeholder.com/90?text=Profil" alt="Profil Foto" />
+        <div>
+          <h2 id="profileName"></h2>
+          <button id="verifyBtnProfile" style="display:none;" onclick="">Mavi Tik Ver</button>
+        </div>
+      </div>
+      <div id="profileBio"></div>
+      <div id="profileStats"></div>
+      <button id="profileEditBtn" style="display:none;" onclick="toggleProfileEdit()">Profili Düzenle</button>
+      <form id="profileEditForm" onsubmit="event.preventDefault(); saveProfileEdit();" style="display:none;">
+        <label>Profil Fotoğrafı:</label>
+        <input type="file" accept="image/*" id="profilePicInput" onchange="changeProfilePic(event)" />
+        <label>Biyografi:</label>
+        <textarea id="bioInput" rows="3"></textarea>
+        <label>Yeni Şifre (boş bırakabilirsin):</label>
+        <input type="password" id="newPasswordInput" placeholder="Yeni şifre" />
+        <button type="submit">Kaydet</button>
+      </form>
+    </div>
+
+    <div id="messagesPage" style="display:none;">
+      <select id="messageUserSelect" onchange="loadChat(this.value)">
+        <option value="">Kullanıcı Seç</option>
+      </select>
+      <div id="messageList"></div>
+      <textarea id="messageInput" rows="3" placeholder="Mesaj yaz..."></textarea>
+      <button id="sendMessageBtn" disabled onclick="sendMessage()">Gönder</button>
+    </div>
+
   </div>
 </div>
 
 <script>
-// ---------- Veri ve Durum ----------
+  // --- Genel değişkenler
+  let currentUser = null;
+  let currentFeed = 'following'; // or 'global'
+  let currentChatUser = null;
+  let isEditingProfile = false;
 
-let currentUser = null;
-let currentFeed = 'following'; // 'global' veya 'following'
-let currentChatUser = null;
+  // --- Veri saklama: localStorage anahtarları
+  const USERS_KEY = 'gomgom_users';
+  const POSTS_KEY = 'gomgom_posts';
 
-// ---------- Veriler ----------
+  // --- Yardımcı fonksiyonlar ---
 
-function loadUsers() {
-  return JSON.parse(localStorage.getItem('msm_users') || '{}');
-}
-function saveUsers(users) {
-  localStorage.setItem('msm_users', JSON.stringify(users));
-}
-function loadPosts() {
-  return JSON.parse(localStorage.getItem('msm_posts') || '[]');
-}
-function savePosts(posts) {
-  localStorage.setItem('msm_posts', JSON.stringify(posts));
-}
+  // JSON veriyi yükle
+  function loadData(key, defaultValue) {
+    try {
+      return JSON.parse(localStorage.getItem(key)) || defaultValue;
+    } catch(e) {
+      return defaultValue;
+    }
+  }
+  // JSON veriyi kaydet
+  function saveData(key, data) {
+    localStorage.setItem(key, JSON.stringify(data));
+  }
 
-// ---------- Başlangıç Admin ve Test Kullanıcısı ----------
+  // Şifre geçerliliği kontrolü (en az 8, harf ve rakam)
+  function validPassword(pwd) {
+    return pwd.length >=8 && /[a-zA-Z]/.test(pwd) && /\d/.test(pwd);
+  }
 
-function init() {
-  let users = loadUsers();
-  if(Object.keys(users).length === 0) {
-    users = {
-      admin: {
-        password: 'sifre123',
-        bio: '',
-        profilePic: '',
-        followers: [],
-        following: [],
-        isVerified: true,
-        canVerifyOthers: true,
-        messages: {}
-      },
-      sa: {
-        password: '12345678',
-        bio: 'Ben birisiyim ',
-        profilePic: '',
-        followers: [],
-        following: [],
-        isVerified: false,
-        canVerifyOthers: false,
-        messages: {}
-      }
+  // HTML metin güvenli
+  function escapeHtml(text) {
+    if(!text) return '';
+    const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+    return text.replace(/[&<>"']/g, m => map[m]);
+  }
+
+  // Zamanı okunabilir yap
+  function timeAgo(time) {
+    const diff = Date.now() - time;
+    if(diff < 60000) return 'az önce';
+    if(diff < 3600000) return Math.floor(diff/60000) + ' dk önce';
+    if(diff < 86400000) return Math.floor(diff/3600000) + ' saat önce';
+    const d = new Date(time);
+    return d.toLocaleDateString() + ' ' + d.toLocaleTimeString();
+  }
+
+  // Rastgele ID üret
+  function genId(len=8) {
+    return Math.random().toString(36).substr(2,len);
+  }
+
+  // --- Kullanıcı yönetimi ---
+  function loadUsers() {
+    return loadData(USERS_KEY, {});
+  }
+  function saveUsers(users) {
+    saveData(USERS_KEY, users);
+  }
+
+  // --- Gönderi yönetimi ---
+  function loadPosts() {
+    return loadData(POSTS_KEY, []);
+  }
+  function savePosts(posts) {
+    saveData(POSTS_KEY, posts);
+  }
+
+  // --- Giriş işlemi ---
+  function login(username, password) {
+    const users = loadUsers();
+    if(!users[username]) return false;
+    if(users[username].password !== password) return false;
+    currentUser = username;
+    saveCurrentUser();
+    return true;
+  }
+  // Kayıt işlemi
+  function register(username, password) {
+    if(!username || !password) return false;
+    const users = loadUsers();
+    if(users[username]) return false;
+    users[username] = {
+      password,
+      profilePic: 'https://via.placeholder.com/50?text=Profil',
+      bio: '',
+      isVerified: false,
+      followers: [],
+      following: [],
+      messages: {}
     };
     saveUsers(users);
+    currentUser = username;
+    saveCurrentUser();
+    return true;
   }
-  if(!localStorage.getItem('msm_posts')) {
-    savePosts([]);
+
+  // Şu anki kullanıcıyı localStorage'da sakla
+  function saveCurrentUser() {
+    localStorage.setItem('gomgom_currentUser', currentUser);
   }
-  
-  // Oturumu koru
-  const savedUser = localStorage.getItem('msm_currentUser');
-  if(savedUser) {
+  // Şu anki kullanıcıyı getir
+  function loadCurrentUser() {
+    currentUser = localStorage.getItem('gomgom_currentUser');
+  }
+  // Çıkış yap
+  function logout() {
+    localStorage.removeItem('gomgom_currentUser');
+    location.reload();
+  }
+
+  // --- Sayfa geçişleri ---
+
+  // Akış gösterimi (following veya global)
+  function showFeed(feedType) {
+    currentFeed = feedType;
+    setActiveNavButton(feedType === 'following' ? 'btnFeedFollowing' : 'btnFeedGlobal');
+    document.getElementById('feed').style.display = 'block';
+    document.getElementById('profilePage').style.display = 'none';
+    document.getElementById('messagesPage').style.display = 'none';
+    renderPosts();
+  }
+
+  function setActiveNavButton(btnId) {
+    const buttons = document.querySelectorAll('#mainNav button');
+    buttons.forEach(b => b.classList.remove('active'));
+    document.getElementById(btnId).classList.add('active');
+  }
+
+  // Profil göster
+  function showProfile(username) {
+    if(!username) return;
     const users = loadUsers();
-    if(users[savedUser]) {
-      currentUser = savedUser;
-      document.getElementById('auth').style.display = 'none';
-      document.getElementById('app').style.display = 'block';
-      showFeed('following');
-      loadUserSelect();
-    }
-  }
-}
+    if(!users[username]) return alert('Kullanıcı bulunamadı');
 
-// ---------- Kayıt ve Giriş ----------
+    document.getElementById('feed').style.display = 'none';
+    document.getElementById('profilePage').style.display = 'block';
+    document.getElementById('messagesPage').style.display = 'none';
 
-function validPassword(pwd) {
-  return pwd.length >=8 && /[a-zA-Z]/.test(pwd) && /\d/.test(pwd);
-}
+    const profilePicEl = document.getElementById('profilePic');
+    const profileNameEl = document.getElementById('profileName');
+    const profileBioEl = document.getElementById('profileBio');
+    const profileStatsEl = document.getElementById('profileStats');
+    const profileEditBtn = document.getElementById('profileEditBtn');
+    const verifyBtn = document.getElementById('verifyBtnProfile');
 
-function register() {
-  const u = document.getElementById('username').value.trim();
-  const p = document.getElementById('password').value;
-  const msg = document.getElementById('auth-msg');
-  msg.style.color = 'red';
-  msg.textContent = '';
-  if(!u || !p) { msg.textContent = 'Kullanıcı adı ve şifre gerekli!'; return; }
-  if(!validPassword(p)) { msg.textContent = 'Şifre en az 8 karakter, harf ve sayı içermeli!'; return; }
-  let users = loadUsers();
-  if(users[u]) { msg.textContent = 'Bu kullanıcı adı alınmış!'; return; }
-  users[u] = {
-    password: p,
-    bio: '',
-    profilePic: '',
-    followers: [],
-    following: [],
-    isVerified: false,
-    canVerifyOthers: false,
-    messages: {}
-  };
-  saveUsers(users);
-  msg.style.color = 'green';
-  msg.textContent = 'Kayıt başarılı! Giriş yapabilirsiniz.';
-}
-
-function login() {
-  const u = document.getElementById('username').value.trim();
-  const p = document.getElementById('password').value;
-  const msg = document.getElementById('auth-msg');
-  msg.style.color = 'red';
-  msg.textContent = '';
-  let users = loadUsers();
-  if(!users[u] || users[u].password !== p) {
-    msg.textContent = 'Kullanıcı adı veya şifre yanlış!';
-    return;
-  }
-  currentUser = u;
-  localStorage.setItem('msm_currentUser', currentUser);
-  document.getElementById('auth').style.display = 'none';
-  document.getElementById('app').style.display = 'block';
-  showFeed('following');
-  loadUserSelect();
-}
-
-// ---------- Çıkış ----------
-
-function logout() {
-  currentUser = null;
-  currentFeed = 'following';
-  currentChatUser = null;
-  localStorage.removeItem('msm_currentUser');
-  document.getElementById('auth').style.display = 'block';
-  document.getElementById('app').style.display = 'none';
-  document.getElementById('auth-msg').textContent = '';
-  document.getElementById('username').value = '';
-  document.getElementById('password').value = '';
-  document.getElementById('feed').style.display = 'block';
-  document.getElementById('profile').style.display = 'none';
-  document.getElementById('users').style.display = 'none';
-  document.getElementById('messages').style.display = 'none';
-}
-
-// ---------- Profil ----------
-
-function showProfile(username) {
-  if(!username) return;
-  const users = loadUsers();
-  if(!users[username]) return alert('Kullanıcı bulunamadı');
-  const user = users[username];
-
-  document.getElementById('feed').style.display = 'none';
-  document.getElementById('profile').style.display = 'block';
-  document.getElementById('users').style.display = 'none';
-  document.getElementById('messages').style.display = 'none';
-
-  document.getElementById('profileName').innerHTML = username + (user.isVerified ? '<span class="verified"> ✔️</span>' : '');
-  document.getElementById('bio').value = user.bio || '';
-  document.getElementById('profilePic').src = user.profilePic || 'https://via.placeholder.com/70?text=Profil';
-
-  if(username === currentUser) {
-    document.getElementById('profilePicInput').style.display = 'block';
-    document.getElementById('bio').disabled = false;
-    document.getElementById('newPassword').style.display = 'block';
-    document.getElementById('verifyBtn').style.display = 'none';
-  } else {
-    document.getElementById('profilePicInput').style.display = 'none';
-    document.getElementById('bio').disabled = true;
-    document.getElementById('newPassword').style.display = 'none';
-    const verifyBtn = document.getElementById('verifyBtn');
-    if(currentUser === 'admin' && !user.isVerified) {
-      verifyBtn.style.display = 'inline-block';
-      verifyBtn.onclick = () => verifyUser(username);
-    } else {
-      verifyBtn.style.display = 'none';
-    }
-  }
-}
-
-function changeProfilePic(event) {
-  const file = event.target.files[0];
-  if(!file) return;
-  const reader = new FileReader();
-  reader.onload = function() {
-    document.getElementById('profilePic').src = reader.result;
-  }
-  reader.readAsDataURL(file);
-}
-
-function saveProfile() {
-  const users = loadUsers();
-  const user = users[currentUser];
-  const newBio = document.getElementById('bio').value.trim();
-  const newPic = document.getElementById('profilePic').src;
-  const newPass = document.getElementById('newPassword').value;
-
-  if(newPass && !validPassword(newPass)) {
-    alert('Şifre en az 8 karakter, harf ve sayı içermeli!');
-    return;
-  }
-
-  user.bio = newBio;
-  user.profilePic = newPic;
-  if(newPass) user.password = newPass;
-
-  saveUsers(users);
-  alert('Profil güncellendi!');
-  document.getElementById('newPassword').value = '';
-  showProfile(currentUser);
-}
-
-// ---------- Mavi Tik Verme ----------
-
-function verifyUser(username) {
-  if(!currentUser) return alert('Giriş yapmalısınız');
-  const users = loadUsers();
-  if(!users[currentUser].canVerifyOthers) return alert('Yetkiniz yok');
-  if(!users[username]) return alert('Kullanıcı bulunamadı');
-  users[username].isVerified = true;
-  saveUsers(users);
-  alert(username + ' artık doğrulanmış!');
-  showProfile(username);
-}
-
-// ---------- Takip Sistemi ----------
-
-function toggleFollow(username) {
-  if(username === currentUser) return;
-  const users = loadUsers();
-  const me = users[currentUser];
-  const target = users[username];
-
-  const followingIndex = me.following.indexOf(username);
-  if(followingIndex >=0) {
-    me.following.splice(followingIndex,1);
-    const followerIndex = target.followers.indexOf(currentUser);
-    if(followerIndex >=0) target.followers.splice(followerIndex,1);
-  } else {
-    me.following.push(username);
-    target.followers.push(currentUser);
-  }
-  saveUsers(users);
-  renderUsersList();
-  renderPosts();
-}
-
-// ---------- Gönderi Yönetimi ----------
-
-function createPost(content, imageData) {
-  if(!content && !imageData) return alert('Metin veya fotoğraf gerekli');
-  let posts = loadPosts();
-  posts.unshift({
-    id: 'post-' + Date.now(),
-    user: currentUser,
-    content,
-    image: imageData || '',
-    time: Date.now(),
-    likes: [],
-    comments: []
-  });
-  savePosts(posts);
-  renderPosts();
-}
-
-function renderPosts() {
-  const feedDiv = document.getElementById('feed');
-  feedDiv.innerHTML = '';
-
-  const posts = loadPosts();
-  const users = loadUsers();
-
-  let filteredPosts = [];
-  if(currentFeed === 'following') {
-    const me = users[currentUser];
-    filteredPosts = posts.filter(p => me.following.includes(p.user) || p.user === currentUser);
-  } else {
-    filteredPosts = posts;
-  }
-
-  filteredPosts.forEach(post => {
-    const user = users[post.user];
-    const liked = post.likes.includes(currentUser);
-    const postDiv = document.createElement('div');
-    postDiv.className = 'post';
-
-    postDiv.innerHTML = `
-      <div class="post-header">
-        <img src="${user.profilePic || 'https://via.placeholder.com/50?text=Profil'}" class="profile-pic" alt="profil" />
-        <strong>${post.user}${user.isVerified ? ' <span class="verified">✔️</span>' : ''}</strong>
-        <small style="margin-left:auto;">${new Date(post.time).toLocaleString()}</small>
-      </div>
-      <div class="post-content">${post.content ? escapeHtml(post.content).replace(/\n/g,'<br>') : ''}</div>
-      ${post.image ? `<img src="${post.image}" alt="post fotoğraf" />` : ''}
-      <div>
-        <span class="btn-like ${liked ? 'liked' : ''}" onclick="toggleLike('${post.id}')">❤️ ${post.likes.length}</span>
-        <span class="btn-comment" onclick="toggleComments('${post.id}')">💬 ${post.comments.length}</span>
-      </div>
-      <div class="comments" id="comments-${post.id}" style="display:none;"></div>
+    const user = users[username];
+    profilePicEl.src = user.profilePic || 'https://via.placeholder.com/90?text=Profil';
+    profileNameEl.innerHTML = escapeHtml(username);
+    if(user.isVerified) profileNameEl.innerHTML += ' <span class="verified">✔️</span>';
+    profileBioEl.textContent = user.bio || '';
+    profileStatsEl.innerHTML = `
+      Takipçi: ${user.followers.length} &nbsp;&nbsp;
+      Takip: ${user.following.length} &nbsp;&nbsp;
+      Gönderi: ${loadPosts().filter(p => p.user === username).length}
     `;
-    feedDiv.appendChild(postDiv);
-  });
 
-  // Gönderi oluştur formu:
-  const createDiv = document.createElement('div');
-  createDiv.className = 'post';
-  createDiv.innerHTML = `
-    <h4>Yeni Gönderi</h4>
-    <textarea id="newPostContent" placeholder="Gönderi metni..." rows="3"></textarea>
-    <input type="file" id="newPostImageInput" accept="image/*" />
-    <button onclick="submitNewPost()">Paylaş</button>
-  `;
-  feedDiv.prepend(createDiv);
-}
+    // Profil sahibiysen düzenle butonunu göster
+    if(username === currentUser) {
+      profileEditBtn.style.display = 'inline-block';
+      verifyBtn.style.display = 'none';
+    } else {
+      profileEditBtn.style.display = 'none';
+      // Eğer admin isek, diğer kullanıcıya mavi tik verebiliriz
+      if(currentUser === 'admin') {
+        verifyBtn.style.display = 'inline-block';
+        verifyBtn.onclick = () => {
+          users[username].isVerified = true;
+          saveUsers(users);
+          showProfile(username);
+        };
+      } else {
+        verifyBtn.style.display = 'none';
+      }
+    }
 
-function escapeHtml(text) {
-  const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
-  return text.replace(/[&<>"']/g, m => map[m]);
-}
+    isEditingProfile = false;
+    document.getElementById('profileEditForm').style.display = 'none';
 
-function submitNewPost() {
-  const content = document.getElementById('newPostContent').value.trim();
-  const fileInput = document.getElementById('newPostImageInput');
-  if(fileInput.files.length > 0) {
-    const file = fileInput.files[0];
+    // Yeni gönderi formunu kaldır, profilde yok
+    if(document.getElementById('newPostForm')) {
+      document.getElementById('newPostForm').remove();
+    }
+  }
+
+  // Profil düzenleme toggle
+  function toggleProfileEdit() {
+    isEditingProfile = !isEditingProfile;
+    const form = document.getElementById('profileEditForm');
+    if(isEditingProfile) {
+      form.style.display = 'flex';
+      const users = loadUsers();
+      const user = users[currentUser];
+      document.getElementById('bioInput').value = user.bio || '';
+      document.getElementById('newPasswordInput').value = '';
+    } else {
+      form.style.display = 'none';
+    }
+  }
+
+  // Profil düzenleme kaydet
+  function saveProfileEdit() {
+    const users = loadUsers();
+    const user = users[currentUser];
+    const bio = document.getElementById('bioInput').value.trim();
+    const newPwd = document.getElementById('newPasswordInput').value.trim();
+    user.bio = bio;
+    if(newPwd.length > 0) {
+      if(!validPassword(newPwd)) {
+        alert('Şifre en az 8 karakter, harf ve rakam içermeli!');
+        return;
+      }
+      user.password = newPwd;
+    }
+    saveUsers(users);
+    alert('Profil güncellendi');
+    toggleProfileEdit();
+    showProfile(currentUser);
+  }
+
+  // Profil fotoğrafı değiştir
+  function changeProfilePic(e) {
+    const file = e.target.files[0];
+    if(!file) return;
     const reader = new FileReader();
-    reader.onload = function() {
-      createPost(content, reader.result);
-      document.getElementById('newPostContent').value = '';
-      fileInput.value = '';
+    reader.onload = () => {
+      const users = loadUsers();
+      users[currentUser].profilePic = reader.result;
+      saveUsers(users);
+      showProfile(currentUser);
     };
     reader.readAsDataURL(file);
-  } else {
-    createPost(content, '');
-    document.getElementById('newPostContent').value = '';
   }
-}
 
-function toggleLike(postId) {
-  let posts = loadPosts();
-  const post = posts.find(p => p.id === postId);
-  if(!post) return;
-  const likeIndex = post.likes.indexOf(currentUser);
-  if(likeIndex >=0) post.likes.splice(likeIndex,1);
-  else post.likes.push(currentUser);
-  savePosts(posts);
-  renderPosts();
-}
+  // --- Gönderi işlemleri ---
 
-function toggleComments(postId) {
-  const commentsDiv = document.getElementById('comments-' + postId);
-  if(!commentsDiv) return;
-  if(commentsDiv.style.display === 'block') {
-    commentsDiv.style.display = 'none';
-  } else {
+  // Gönderileri render et
+  function renderPosts() {
+    const feedDiv = document.getElementById('feed');
+    feedDiv.innerHTML = '';
+
+    // Gönderi listesi
+    let posts = loadPosts();
+
+    if(currentFeed === 'following') {
+      // Takip edilenlerin gönderileri
+      const users = loadUsers();
+      const following = users[currentUser].following || [];
+      posts = posts.filter(p => following.includes(p.user));
+    }
+
+    if(posts.length === 0) {
+      feedDiv.innerHTML = '<p style="text-align:center; color:#999; padding:30px;">Gönderi yok.</p>';
+      addNewPostForm();
+      return;
+    }
+
+    // En yeni ilk
+    posts.sort((a,b) => b.time - a.time);
+
+    posts.forEach(post => {
+      feedDiv.appendChild(createPostCard(post));
+    });
+    addNewPostForm();
+  }
+
+  // Yeni gönderi formu ekle
+  function addNewPostForm() {
+    if(document.getElementById('newPostForm')) return;
+    const feedDiv = document.getElementById('feed');
+
+    const form = document.createElement('form');
+    form.id = 'newPostForm';
+    form.onsubmit = e => {
+      e.preventDefault();
+      submitNewPost();
+    };
+    form.innerHTML = `
+      <textarea id="newPostContent" rows="3" placeholder="Ne düşünüyorsun?"></textarea>
+      <input type="file" id="newPostImageInput" accept="image/*" />
+      <button type="submit">Paylaş</button>
+    `;
+    feedDiv.prepend(form);
+  }
+
+  // Tek gönderi kartı oluştur
+  function createPostCard(post) {
+    const users = loadUsers();
+    const user = users[post.user];
+    const card = document.createElement('div');
+    card.className = 'post-card';
+
+    card.innerHTML = `
+      <div class="post-header">
+        <img src="${user.profilePic}" alt="Profil" />
+        <a class="post-user" onclick="showProfile('${post.user}')">${escapeHtml(post.user)}${user.isVerified ? ' <span class="verified">✔️</span>' : ''}</a>
+        <div class="post-time">${timeAgo(post.time)}</div>
+      </div>
+      <div class="post-content">${escapeHtml(post.content).replace(/\n/g,'<br>')}</div>
+      ${post.image ? `<img src="${post.image}" alt="Gönderi resmi" class="post-image" />` : ''}
+      <div class="post-actions">
+        <span onclick="toggleLike('${post.id}')" class="${post.likes.includes(currentUser) ? 'liked' : ''}">♥️ ${post.likes.length}</span>
+        <span onclick="toggleComments('${post.id}')">💬 ${post.comments.length}</span>
+      </div>
+      <div class="comments-section" id="comments-${post.id}" style="display:none;"></div>
+    `;
+    return card;
+  }
+
+  // Gönderi oluştur
+  function submitNewPost() {
+    const content = document.getElementById('newPostContent').value.trim();
+    if(!content) {
+      alert('Gönderi boş olamaz');
+      return;
+    }
+    const fileInput = document.getElementById('newPostImageInput');
+    if(fileInput.files.length > 0) {
+      const file = fileInput.files[0];
+      const reader = new FileReader();
+      reader.onload = function() {
+        createPost(content, reader.result);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      createPost(content, '');
+    }
+  }
+
+  // Gönderi yarat
+  function createPost(content, image) {
+    const posts = loadPosts();
+    const newPost = {
+      id: genId(10),
+      user: currentUser,
+      content,
+      image,
+      time: Date.now(),
+      likes: [],
+      comments: []
+    };
+    posts.push(newPost);
+    savePosts(posts);
+    renderPosts();
+  }
+
+  // Beğeni toggle
+  function toggleLike(postId) {
+    const posts = loadPosts();
+    const post = posts.find(p => p.id === postId);
+    if(!post) return;
+    const idx = post.likes.indexOf(currentUser);
+    if(idx >= 0) post.likes.splice(idx, 1);
+    else post.likes.push(currentUser);
+    savePosts(posts);
+    renderPosts();
+  }
+
+  // Yorumları göster/gizle
+  function toggleComments(postId) {
+    const commentsDiv = document.getElementById('comments-' + postId);
+    if(!commentsDiv) return;
+    if(commentsDiv.style.display === 'block') {
+      commentsDiv.style.display = 'none';
+      return;
+    }
     commentsDiv.style.display = 'block';
     renderComments(postId);
   }
-}
 
-function renderComments(postId) {
-  const commentsDiv = document.getElementById('comments-' + postId);
-  if(!commentsDiv) return;
-  const posts = loadPosts();
-  const post = posts.find(p => p.id === postId);
-  if(!post) return;
-  const users = loadUsers();
+  // Yorumları render et
+  function renderComments(postId) {
+    const commentsDiv = document.getElementById('comments-' + postId);
+    commentsDiv.innerHTML = '';
 
-  commentsDiv.innerHTML = '';
+    const posts = loadPosts();
+    const post = posts.find(p => p.id === postId);
+    if(!post) return;
 
-  post.comments.forEach((c, i) => {
-    const user = users[c.user];
-    const commentDiv = document.createElement('div');
-    commentDiv.className = 'comment';
-    commentDiv.innerHTML = `
-      <strong>${c.user}${user.isVerified ? ' <span class="verified">✔️</span>' : ''}</strong>: ${escapeHtml(c.text).replace(/\n/g,'<br>')}
-      <br/><small>${new Date(c.time).toLocaleString()}</small>
-      <br/><button onclick="replyComment('${postId}', ${i})">Yanıtla</button>
-      <div id="replies-${postId}-${i}">
-        ${c.replies ? c.replies.map(r => `<div class="reply"><strong>${r.user}${users[r.user].isVerified ? ' <span class="verified">✔️</span>' : ''}</strong>: ${escapeHtml(r.text)}</div>`).join('') : ''}
-      </div>
+    const users = loadUsers();
+
+    post.comments.forEach((comment,i) => {
+      const user = users[comment.user];
+      const div = document.createElement('div');
+      div.className = 'comment';
+      div.innerHTML = `<strong>${escapeHtml(comment.user)}${user.isVerified ? ' <span class="verified">✔️</span>' : ''}</strong>: ${escapeHtml(comment.text).replace(/\n/g,'<br>')}<br/><small>${timeAgo(comment.time)}</small>`;
+      commentsDiv.appendChild(div);
+    });
+
+    // Yorum ekleme alanı
+    const addDiv = document.createElement('div');
+    addDiv.className = 'comment-add';
+    addDiv.innerHTML = `
+      <textarea id="commentInput-${postId}" rows="2" placeholder="Yorum yaz..."></textarea>
+      <button onclick="addComment('${postId}')">Gönder</button>
     `;
-    commentsDiv.appendChild(commentDiv);
-  });
-
-  // Yorum ekleme alanı
-  const addCommentDiv = document.createElement('div');
-  addCommentDiv.innerHTML = `
-    <textarea id="commentInput-${postId}" placeholder="Yorum yaz..." rows="2"></textarea>
-    <button onclick="addComment('${postId}')">Yorum Ekle</button>
-  `;
-  commentsDiv.appendChild(addCommentDiv);
-}
-
-function addComment(postId) {
-  const input = document.getElementById('commentInput-' + postId);
-  if(!input) return;
-  const text = input.value.trim();
-  if(!text) return alert('Yorum boş olamaz');
-  const posts = loadPosts();
-  const post = posts.find(p => p.id === postId);
-  if(!post) return;
-  if(!post.comments) post.comments = [];
-  post.comments.push({ user: currentUser, text, time: Date.now(), replies: [] });
-  savePosts(posts);
-  renderComments(postId);
-  input.value = '';
-}
-
-function replyComment(postId, commentIndex) {
-  const replyAreaId = `replyInput-${postId}-${commentIndex}`;
-  let existing = document.getElementById(replyAreaId);
-  if(existing) {
-    existing.remove();
-    return;
+    commentsDiv.appendChild(addDiv);
   }
 
-  const commentsDiv = document.getElementById('comments-' + postId);
-  if(!commentsDiv) return;
+  // Yorum ekle
+  function addComment(postId) {
+    const input = document.getElementById('commentInput-' + postId);
+    if(!input) return;
+    const text = input.value.trim();
+    if(!text) return alert('Yorum boş olamaz');
+    const posts = loadPosts();
+    const post = posts.find(p => p.id === postId);
+    if(!post) return;
+    post.comments.push({ user: currentUser, text, time: Date.now() });
+    savePosts(posts);
+    renderComments(postId);
+  }
 
-  const repliesDiv = document.getElementById(`replies-${postId}-${commentIndex}`);
-  if(!repliesDiv) return;
+  // --- Kullanıcılar ve takip işlemleri ---
 
-  const replyDiv = document.createElement('div');
-  replyDiv.id = replyAreaId;
-  replyDiv.innerHTML = `
-    <textarea id="replyText-${postId}-${commentIndex}" rows="2" placeholder="Yanıt yaz..."></textarea>
-    <button onclick="addReply('${postId}', ${commentIndex})">Yanıtla</button>
-    <button onclick="document.getElementById('${replyAreaId}').remove()">İptal</button>
-  `;
-  repliesDiv.prepend(replyDiv);
-}
+  // Takip et / bırak
+  function toggleFollow(username) {
+    if(username === currentUser) return;
+    const users = loadUsers();
+    const me = users[currentUser];
+    const target = users[username];
+    if(!me.following) me.following = [];
+    if(!target.followers) target.followers = [];
 
-function addReply(postId, commentIndex) {
-  const textarea = document.getElementById(`replyText-${postId}-${commentIndex}`);
-  if(!textarea) return;
-  const text = textarea.value.trim();
-  if(!text) return alert('Yanıt boş olamaz');
-  const posts = loadPosts();
-  const post = posts.find(p => p.id === postId);
-  if(!post || !post.comments || !post.comments[commentIndex]) return;
-  if(!post.comments[commentIndex].replies) post.comments[commentIndex].replies = [];
-  post.comments[commentIndex].replies.push({ user: currentUser, text });
-  savePosts(posts);
-  renderComments(postId);
-}
+    if(me.following.includes(username)) {
+      me.following = me.following.filter(u => u !== username);
+      target.followers = target.followers.filter(f => f !== currentUser);
+    } else {
+      me.following.push(username);
+      target.followers.push(currentUser);
+    }
+    saveUsers(users);
+    // Eğer profil açıksa güncelle
+    if(document.getElementById('profilePage').style.display === 'block' && document.getElementById('profileName').textContent === username) {
+      showProfile(username);
+    }
+  }
 
-// ---------- Kullanıcı Listesi ----------
+  // --- Mesajlaşma sistemi ---
+  function showMessages() {
+    document.getElementById('feed').style.display = 'none';
+    document.getElementById('profilePage').style.display = 'none';
+    document.getElementById('messagesPage').style.display = 'block';
 
-function showUsers() {
-  document.getElementById('feed').style.display = 'none';
-  document.getElementById('profile').style.display = 'none';
-  document.getElementById('users').style.display = 'block';
-  document.getElementById('messages').style.display = 'none';
-  renderUsersList();
-}
+    const select = document.getElementById('messageUserSelect');
+    const users = loadUsers();
 
-function renderUsersList() {
-  const userListDiv = document.getElementById('userList');
-  userListDiv.innerHTML = '';
-  const users = loadUsers();
+    select.innerHTML = '<option value="">Kullanıcı Seç</option>';
+    Object.keys(users).forEach(u => {
+      if(u !== currentUser) {
+        select.innerHTML += `<option value="${u}">${escapeHtml(u)}${users[u].isVerified ? ' ✔️' : ''}</option>`;
+      }
+    });
 
-  Object.keys(users).forEach(u => {
-    if(u === currentUser) return; // kendini listeleme
-    const user = users[u];
-    const btnText = users[currentUser].following.includes(u) ? 'Takibi Bırak' : 'Takip Et';
-    const userDiv = document.createElement('div');
-    userDiv.style.marginBottom = '10px';
-    userDiv.innerHTML = `
-      <img src="${user.profilePic || 'https://via.placeholder.com/50?text=Profil'}" class="profile-pic" alt="profil" />
-      <strong>${u}${user.isVerified ? ' <span class="verified">✔️</span>' : ''}</strong>
-      <button onclick="toggleFollow('${u}')">${btnText}</button>
-      <button onclick="showProfile('${u}')">Profili Gör</button>
+    currentChatUser = null;
+    document.getElementById('messageList').innerHTML = '';
+    document.getElementById('messageInput').value = '';
+    document.getElementById('sendMessageBtn').disabled = true;
+  }
+
+  function loadChat(withUser) {
+    currentChatUser = withUser;
+    const messageList = document.getElementById('messageList');
+    messageList.innerHTML = '';
+
+    if(!withUser) {
+      document.getElementById('sendMessageBtn').disabled = true;
+      return;
+    }
+    document.getElementById('sendMessageBtn').disabled = false;
+
+    const users = loadUsers();
+    const meMessages = users[currentUser].messages || {};
+    const chatMessages = meMessages[withUser] || [];
+
+    chatMessages.forEach(m => {
+      const div = document.createElement('div');
+      div.className = 'message ' + (m.from === currentUser ? 'self' : 'other');
+      div.innerHTML = `<strong>${escapeHtml(m.from)}</strong>: ${escapeHtml(m.text)}<br/><small>${timeAgo(m.time)}</small>`;
+      messageList.appendChild(div);
+    });
+    messageList.scrollTop = messageList.scrollHeight;
+  }
+
+  function sendMessage() {
+    const text = document.getElementById('messageInput').value.trim();
+    if(!text) return alert('Mesaj boş olamaz');
+    if(!currentChatUser) return alert('Önce kullanıcı seçin');
+
+    const users = loadUsers();
+
+    if(!users[currentUser].messages) users[currentUser].messages = {};
+    if(!users[currentUser].messages[currentChatUser]) users[currentUser].messages[currentChatUser] = [];
+    users[currentUser].messages[currentChatUser].push({ from: currentUser, text, time: Date.now() });
+
+    if(!users[currentChatUser].messages) users[currentChatUser].messages = {};
+    if(!users[currentChatUser].messages[currentUser]) users[currentChatUser].messages[currentUser] = [];
+    users[currentChatUser].messages[currentUser].push({ from: currentUser, text, time: Date.now() });
+
+    saveUsers(users);
+    loadChat(currentChatUser);
+    document.getElementById('messageInput').value = '';
+  }
+
+  // --- Kullanıcı arama ---
+
+  const searchInput = document.getElementById('searchInput');
+  const userSearchResults = document.getElementById('userSearchResults');
+
+  searchInput.addEventListener('input', () => {
+    const query = searchInput.value.trim().toLowerCase();
+    if(!query) {
+      userSearchResults.style.display = 'none';
+      userSearchResults.innerHTML = '';
+      return;
+    }
+    const users = loadUsers();
+    const filtered = Object.keys(users)
+      .filter(u => u.toLowerCase().includes(query) && u !== currentUser)
+      .slice(0, 10);
+    if(filtered.length === 0) {
+      userSearchResults.innerHTML = '<div style="padding:10px; color:#999;">Kullanıcı bulunamadı</div>';
+      userSearchResults.style.display = 'block';
+      return;
+    }
+    userSearchResults.innerHTML = '';
+    filtered.forEach(u => {
+      const div = document.createElement('div');
+      div.innerHTML = `<img src="${users[u].profilePic}" alt="Profil"/> <span>${escapeHtml(u)}${users[u].isVerified ? ' ✔️' : ''}</span>`;
+      div.onclick = () => {
+        showProfile(u);
+        userSearchResults.style.display = 'none';
+        searchInput.value = '';
+      };
+      userSearchResults.appendChild(div);
+    });
+    userSearchResults.style.display = 'block';
+  });
+
+  // --- Reels için demo veri ---
+  const reelsData = [
+    {id:'r1', type:'video', src:'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.webm', caption:'Doğa harikası'},
+    {id:'r2', type:'image', src:'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=600&q=60', caption:'Güzel manzara'},
+    {id:'r3', type:'video', src:'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/bee.webm', caption:'Arılar çalışıyor'},
+    {id:'r4', type:'image', src:'https://images.unsplash.com/photo-1517817748492-7b4f95208139?auto=format&fit=crop&w=600&q=60', caption:'Şehir ışıkları'}
+  ];
+
+  function renderReels() {
+    const reelsDiv = document.getElementById('reels');
+    reelsDiv.querySelectorAll('.reel-item').forEach(e => e.remove());
+
+    reelsData.forEach(reel => {
+      const div = document.createElement('div');
+      div.className = 'reel-item';
+      if(reel.type === 'video') {
+        const vid = document.createElement('video');
+        vid.src = reel.src;
+        vid.muted = true;
+        vid.loop = true;
+        vid.autoplay = true;
+        vid.playsInline = true;
+        div.appendChild(vid);
+      } else {
+        const img = document.createElement('img');
+        img.src = reel.src;
+        div.appendChild(img);
+      }
+      const cap = document.createElement('div');
+      cap.className = 'reel-caption';
+      cap.textContent = reel.caption;
+      div.appendChild(cap);
+
+      div.onclick = () => alert('Reels tıklama: ' + reel.caption);
+
+      reelsDiv.appendChild(div);
+    });
+  }
+
+  // --- Giriş ekranı ---
+  function showLogin() {
+    document.body.innerHTML = `
+      <div style="max-width: 400px; margin: 100px auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 2px 12px rgb(0 0 0 / 0.2); font-family: Arial, sans-serif;">
+        <h2 style="text-align:center;">GOM GOM Giriş</h2>
+        <input id="loginUser" type="text" placeholder="Kullanıcı adı" style="width:100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #ccc;" />
+        <input id="loginPass" type="password" placeholder="Şifre" style="width:100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #ccc;" />
+        <button style="width:100%; padding: 12px; margin-top: 10px; background:#3897f0; color:white; border:none; border-radius: 8px; font-weight: 600; cursor:pointer;" onclick="handleLogin()">Giriş Yap</button>
+        <p style="text-align:center; margin-top: 12px;">Hesabın yok mu? <a href="#" onclick="showRegister()">Kayıt Ol</a></p>
+        <div id="loginError" style="color:red; margin-top:10px; text-align:center;"></div>
+      </div>
     `;
-    userListDiv.appendChild(userDiv);
-  });
-}
+  }
 
-// ---------- Akış Göster ----------
+  function showRegister() {
+    document.body.innerHTML = `
+      <div style="max-width: 400px; margin: 100px auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 2px 12px rgb(0 0 0 / 0.2); font-family: Arial, sans-serif;">
+        <h2 style="text-align:center;">GOM GOM Kayıt</h2>
+        <input id="regUser" type="text" placeholder="Kullanıcı adı" style="width:100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #ccc;" />
+        <input id="regPass" type="password" placeholder="Şifre (en az 8 karakter)" style="width:100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #ccc;" />
+        <button style="width:100%; padding: 12px; margin-top: 10px; background:#3897f0; color:white; border:none; border-radius: 8px; font-weight: 600; cursor:pointer;" onclick="handleRegister()">Kayıt Ol</button>
+        <p style="text-align:center; margin-top: 12px;">Zaten hesabın var mı? <a href="#" onclick="showLogin()">Giriş Yap</a></p>
+        <div id="regError" style="color:red; margin-top:10px; text-align:center;"></div>
+      </div>
+    `;
+  }
 
-function showFeed(feed) {
-  currentFeed = feed;
-  document.getElementById('feed').style.display = 'block';
-  document.getElementById('profile').style.display = 'none';
-  document.getElementById('users').style.display = 'none';
-  document.getElementById('messages').style.display = 'none';
-  renderPosts();
-}
+  function handleLogin() {
+    const user = document.getElementById('loginUser').value.trim();
+    const pass = document.getElementById('loginPass').value;
+    const err = document.getElementById('loginError');
+    if(!user || !pass) {
+      err.textContent = 'Lütfen tüm alanları doldurun.';
+      return;
+    }
+    if(login(user, pass)) {
+      location.reload();
+    } else {
+      err.textContent = 'Kullanıcı adı veya şifre yanlış.';
+    }
+  }
 
-// ---------- Mesajlaşma ----------
+  function handleRegister() {
+    const user = document.getElementById('regUser').value.trim();
+    const pass = document.getElementById('regPass').value;
+    const err = document.getElementById('regError');
+    if(!user || !pass) {
+      err.textContent = 'Lütfen tüm alanları doldurun.';
+      return;
+    }
+    if(!validPassword(pass)) {
+      err.textContent = 'Şifre en az 8 karakter, harf ve rakam içermeli.';
+      return;
+    }
+    if(register(user, pass)) {
+      location.reload();
+    } else {
+      err.textContent = 'Bu kullanıcı adı zaten alınmış.';
+    }
+  }
 
-function showMessages() {
-  document.getElementById('feed').style.display = 'none';
-  document.getElementById('profile').style.display = 'none';
-  document.getElementById('users').style.display = 'none';
-  document.getElementById('messages').style.display = 'block';
-  loadUserSelect();
-  document.getElementById('messageList').innerHTML = '';
-  currentChatUser = null;
-  document.getElementById('chatUserSelect').value = '';
-  document.getElementById('messageInput').value = '';
-}
+  // --- Başlangıç ---
+  window.onload = () => {
+    loadCurrentUser();
+    if(!currentUser) {
+      showLogin();
+      return;
+    }
+    document.body.innerHTML = `
+      <header>GOM GOM</header>
+      <div id="container">
+        <div id="leftPanel">
+          <div id="searchBox">
+            <input type="text" placeholder="Kullanıcı Ara..." id="searchInput" autocomplete="off" />
+            <div id="userSearchResults" style="display:none;"></div>
+          </div>
+          <div id="reels">
+            <h3>Reels</h3>
+          </div>
+        </div>
+        <div id="mainPanel">
+          <nav id="mainNav">
+            <button id="btnFeedFollowing" class="active" onclick="showFeed('following')">Takip Ettiklerim</button>
+            <button id="btnFeedGlobal" onclick="showFeed('global')">Global Akış</button>
+            <button id="btnProfile" onclick="showProfile(currentUser)">Profilim</button>
+            <button id="btnMessages" onclick="showMessages()">Mesajlar</button>
+            <button id="btnLogout" onclick="logout()">Çıkış</button>
+          </nav>
+          <div id="feed"></div>
+          <div id="profilePage" style="display:none;">
+            <div id="profilePage-header">
+              <img id="profilePic" src="https://via.placeholder.com/90?text=Profil" alt="Profil Foto" />
+              <div>
+                <h2 id="profileName"></h2>
+                <button id="verifyBtnProfile" style="display:none;" onclick="">Mavi Tik Ver</button>
+              </div>
+            </div>
+            <div id="profileBio"></div>
+            <div id="profileStats"></div>
+            <button id="profileEditBtn" style="display:none;" onclick="toggleProfileEdit()">Profili Düzenle</button>
+            <form id="profileEditForm" onsubmit="event.preventDefault(); saveProfileEdit();" style="display:none;">
+              <label>Profil Fotoğrafı:</label>
+              <input type="file" accept="image/*" id="profilePicInput" onchange="changeProfilePic(event)" />
+              <label>Biyografi:</label>
+              <textarea id="bioInput" rows="3"></textarea>
+              <label>Yeni Şifre (boş bırakabilirsin):</label>
+              <input type="password" id="newPasswordInput" placeholder="Yeni şifre" />
+              <button type="submit">Kaydet</button>
+            </form>
+          </div>
+          <div id="messagesPage" style="display:none;">
+            <select id="messageUserSelect" onchange="loadChat(this.value)">
+              <option value="">Kullanıcı Seç</option>
+            </select>
+            <div id="messageList"></div>
+            <textarea id="messageInput" rows="3" placeholder="Mesaj yaz..."></textarea>
+            <button id="sendMessageBtn" disabled onclick="sendMessage()">Gönder</button>
+          </div>
+        </div>
+      </div>
+    `;
+    // Olay bağla
+    document.getElementById('searchInput').addEventListener('input', () => {
+      const query = document.getElementById('searchInput').value.trim().toLowerCase();
+      const userSearchResults = document.getElementById('userSearchResults');
+      if(!query) {
+        userSearchResults.style.display = 'none';
+        userSearchResults.innerHTML = '';
+        return;
+      }
+      const users = loadUsers();
+      const filtered = Object.keys(users)
+        .filter(u => u.toLowerCase().includes(query) && u !== currentUser)
+        .slice(0, 10);
+      if(filtered.length === 0) {
+        userSearchResults.innerHTML = '<div style="padding:10px; color:#999;">Kullanıcı bulunamadı</div>';
+        userSearchResults.style.display = 'block';
+        return;
+      }
+      userSearchResults.innerHTML = '';
+      filtered.forEach(u => {
+        const div = document.createElement('div');
+        div.innerHTML = `<img src="${users[u].profilePic}" alt="Profil"/> <span>${escapeHtml(u)}${users[u].isVerified ? ' ✔️' : ''}</span>`;
+        div.onclick = () => {
+          showProfile(u);
+          userSearchResults.style.display = 'none';
+          document.getElementById('searchInput').value = '';
+        };
+        userSearchResults.appendChild(div);
+      });
+      userSearchResults.style.display = 'block';
+    });
 
-function loadUserSelect() {
-  const select = document.getElementById('chatUserSelect');
-  const users = loadUsers();
-  select.innerHTML = '<option value="">Kullanıcı Seç</option>';
-  Object.keys(users).forEach(u => {
-    if(u === currentUser) return;
-    const option = document.createElement('option');
-    option.value = u;
-    option.textContent = u + (users[u].isVerified ? ' ✔️' : '');
-    select.appendChild(option);
-  });
-}
-
-function loadChat(withUser) {
-  currentChatUser = withUser;
-  const messageList = document.getElementById('messageList');
-  messageList.innerHTML = '';
-  if(!withUser) return;
-
-  const users = loadUsers();
-  const meMessages = users[currentUser].messages || {};
-  const chatMessages = meMessages[withUser] || [];
-
-  chatMessages.forEach(m => {
-    const msgDiv = document.createElement('div');
-    msgDiv.className = 'message ' + (m.from === currentUser ? 'self' : '');
-    msgDiv.innerHTML = `<strong>${m.from}</strong>: ${escapeHtml(m.text)} <br/><small>${new Date(m.time).toLocaleString()}</small>`;
-    messageList.appendChild(msgDiv);
-  });
-  messageList.scrollTop = messageList.scrollHeight;
-}
-
-function sendMessage() {
-  const text = document.getElementById('messageInput').value.trim();
-  if(!text) return alert('Mesaj boş olamaz');
-  if(!currentChatUser) return alert('Önce kullanıcı seçin');
-
-  const users = loadUsers();
-
-  // Gönderici tarafı
-  if(!users[currentUser].messages) users[currentUser].messages = {};
-  if(!users[currentUser].messages[currentChatUser]) users[currentUser].messages[currentChatUser] = [];
-  users[currentUser].messages[currentChatUser].push({ from: currentUser, text, time: Date.now() });
-
-  // Alıcı tarafı
-  if(!users[currentChatUser].messages) users[currentChatUser].messages = {};
-  if(!users[currentChatUser].messages[currentUser]) users[currentChatUser].messages[currentUser] = [];
-  users[currentChatUser].messages[currentUser].push({ from: currentUser, text, time: Date.now() });
-
-  saveUsers(users);
-  loadChat(currentChatUser);
-  document.getElementById('messageInput').value = '';
-}
-
-// ---------- Sayfa Yüklenince ----------
-
-window.onload = init;
+    renderReels();
+    showFeed('following');
+  };
 </script>
 
 </body>
