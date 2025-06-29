@@ -25,7 +25,7 @@
   .reply { margin-left: 15px; border-left: 2px solid #eee; padding-left: 8px; font-size: 14px; color: #555; }
   .message-list { max-height: 300px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; background: #fff; margin-bottom: 10px; border-radius: 6px; }
   .message { margin-bottom: 8px; }
-  .message.self { text-align: right; }
+  .message.self { text-align: right; color: blue; }
   small { color: #999; }
   .verified { color: #3897f0; font-weight: bold; margin-left: 6px; }
   .error { color: red; }
@@ -51,6 +51,7 @@
     <button onclick="showFeed('global')">Global Akış</button>
     <button onclick="showProfile(currentUser)">Profilim</button>
     <button onclick="showUsers()">Kullanıcılar</button>
+    <button onclick="showMessages()">Mesajlar</button>
     <button onclick="logout()">Çıkış</button>
   </nav>
 
@@ -149,6 +150,7 @@ function register() {
   const u = document.getElementById('username').value.trim();
   const p = document.getElementById('password').value;
   const msg = document.getElementById('auth-msg');
+  msg.style.color = 'red';
   msg.textContent = '';
   if(!u || !p) { msg.textContent = 'Kullanıcı adı ve şifre gerekli!'; return; }
   if(!validPassword(p)) { msg.textContent = 'Şifre en az 8 karakter, harf ve sayı içermeli!'; return; }
@@ -431,94 +433,99 @@ function renderComments(postId) {
   if(!commentsDiv) return;
   commentsDiv.innerHTML = '';
 
-  const posts = loadPosts();
+  let posts = loadPosts();
   const post = posts.find(p => p.id === postId);
   if(!post) return;
+
   const users = loadUsers();
 
-  post.comments.forEach((comment, i) => {
-    const user = users[comment.user];
+  // Yorumları listele
+  post.comments.forEach((c,i) => {
+    const user = users[c.user];
     const commentDiv = document.createElement('div');
     commentDiv.className = 'comment';
-    commentDiv.innerHTML = `<strong>${comment.user}${user.isVerified ? ' <span class="verified">✔️</span>' : ''}</strong>: ${escapeHtml(comment.text)}`;
-    commentsDiv.appendChild(commentDiv);
-
-    // Yorum yanıtları
-    if(comment.replies) {
-      comment.replies.forEach(reply => {
-        const ru = users[reply.user];
+    commentDiv.innerHTML = `<strong>${c.user}${user && user.isVerified ? ' <span class="verified">✔️</span>' : ''}</strong>: ${escapeHtml(c.text)} <br><small>${new Date(c.time).toLocaleString()}</small>`;
+    
+    // Cevaplar varsa göster
+    if(c.replies && c.replies.length > 0) {
+      c.replies.forEach(r => {
+        const rUser = users[r.user];
         const replyDiv = document.createElement('div');
         replyDiv.className = 'reply';
-        replyDiv.innerHTML = `<strong>${reply.user}${ru && ru.isVerified ? ' <span class="verified">✔️</span>' : ''}</strong>: ${escapeHtml(reply.text)}`;
-        commentsDiv.appendChild(replyDiv);
+        replyDiv.innerHTML = `<strong>${r.user}${rUser && rUser.isVerified ? ' <span class="verified">✔️</span>' : ''}</strong>: ${escapeHtml(r.text)} <br><small>${new Date(r.time).toLocaleString()}</small>`;
+        commentDiv.appendChild(replyDiv);
       });
     }
 
-    // Yorum yapma alanı (yalnızca giriş yapan)
-    if(currentUser) {
-      const replyInput = document.createElement('textarea');
-      replyInput.rows = 2;
-      replyInput.placeholder = "Yanıt yaz...";
-      replyInput.style.width = "95%";
-      replyInput.id = `reply-input-${postId}-${i}`;
+    // Yorumlara cevap verme alanı
+    const replyInput = document.createElement('textarea');
+    replyInput.rows = 2;
+    replyInput.placeholder = 'Cevap yaz...';
+    replyInput.style.width = '100%';
+    replyInput.id = 'replyInput-'+postId+'-'+i;
 
-      const replyBtn = document.createElement('button');
-      replyBtn.textContent = "Yanıtla";
-      replyBtn.onclick = () => {
-        const val = replyInput.value.trim();
-        if(val) {
-          addReply(postId, i, val);
-          renderComments(postId);
-        }
-      };
+    const replyBtn = document.createElement('button');
+    replyBtn.textContent = 'Cevapla';
+    replyBtn.onclick = () => replyComment(postId, i);
 
-      commentsDiv.appendChild(replyInput);
-      commentsDiv.appendChild(replyBtn);
-    }
+    commentDiv.appendChild(replyInput);
+    commentDiv.appendChild(replyBtn);
+
+    commentsDiv.appendChild(commentDiv);
   });
 
-  // Yeni yorum ekleme alanı
-  if(currentUser) {
-    const newCommentInput = document.createElement('textarea');
-    newCommentInput.rows = 2;
-    newCommentInput.placeholder = "Yorum yaz...";
-    newCommentInput.id = `new-comment-${postId}`;
-    newCommentInput.style.width = "95%";
+  // Yeni yorum alanı
+  const newCommentTextarea = document.createElement('textarea');
+  newCommentTextarea.id = 'newComment-'+postId;
+  newCommentTextarea.rows = 3;
+  newCommentTextarea.placeholder = 'Yorum yaz...';
+  newCommentTextarea.style.width = '100%';
 
-    const newCommentBtn = document.createElement('button');
-    newCommentBtn.textContent = "Yorum Ekle";
-    newCommentBtn.onclick = () => {
-      const val = newCommentInput.value.trim();
-      if(val) {
-        addComment(postId, val);
-        renderComments(postId);
-      }
-    };
-    commentsDiv.appendChild(newCommentInput);
-    commentsDiv.appendChild(newCommentBtn);
-  }
+  const newCommentBtn = document.createElement('button');
+  newCommentBtn.textContent = 'Yorum Yap';
+  newCommentBtn.onclick = () => addComment(postId);
+
+  commentsDiv.appendChild(newCommentTextarea);
+  commentsDiv.appendChild(newCommentBtn);
 }
 
-function addComment(postId, text) {
-  const posts = loadPosts();
+function addComment(postId) {
+  const textArea = document.getElementById('newComment-'+postId);
+  if(!textArea) return;
+  const text = textArea.value.trim();
+  if(!text) return alert('Yorum boş olamaz');
+  let posts = loadPosts();
   const post = posts.find(p => p.id === postId);
   if(!post) return;
-  post.comments.push({user: currentUser, text, replies: []});
+  post.comments.push({
+    user: currentUser,
+    text,
+    time: Date.now(),
+    replies: []
+  });
   savePosts(posts);
-  renderPosts();
+  renderComments(postId);
 }
 
-function addReply(postId, commentIndex, text) {
-  const posts = loadPosts();
+function replyComment(postId, commentIndex) {
+  const replyInput = document.getElementById('replyInput-'+postId+'-'+commentIndex);
+  if(!replyInput) return;
+  const text = replyInput.value.trim();
+  if(!text) return alert('Cevap boş olamaz');
+  let posts = loadPosts();
   const post = posts.find(p => p.id === postId);
   if(!post) return;
   if(!post.comments[commentIndex].replies) post.comments[commentIndex].replies = [];
-  post.comments[commentIndex].replies.push({user: currentUser, text});
+  post.comments[commentIndex].replies.push({
+    user: currentUser,
+    text,
+    time: Date.now()
+  });
   savePosts(posts);
-  renderPosts();
+  renderComments(postId);
 }
 
-// ---------- Kullanıcı Listesi ----------
+// ---------- Kullanıcılar Listesi ----------
 
 function showUsers() {
   document.getElementById('feed').style.display = 'none';
@@ -532,29 +539,22 @@ function renderUsersList() {
   const userListDiv = document.getElementById('userList');
   userListDiv.innerHTML = '';
   const users = loadUsers();
-
   Object.keys(users).forEach(u => {
-    if(u === currentUser) return;
     const user = users[u];
+    if(u === currentUser) return; // kendini gösterme
     const div = document.createElement('div');
-    div.style.borderBottom = '1px solid #ccc';
-    div.style.padding = '8px 0';
-
-    const isFollowing = users[currentUser].following.includes(u);
-
+    div.style.marginBottom = '10px';
     div.innerHTML = `
-      <img src="${user.profilePic || 'https://via.placeholder.com/40?text=Profil'}" class="profile-pic" style="width:40px; height:40px; vertical-align:middle;" />
-      <strong>${u}${user.isVerified ? ' <span class="verified">✔️</span>' : ''}</strong> 
-      <button style="float:right; width:100px;" onclick="toggleFollow('${u}')">
-        ${isFollowing ? 'Takibi Bırak' : 'Takip Et'}
-      </button>
-      <button style="float:right; margin-right: 8px; width:100px;" onclick="showProfile('${u}')">Profil</button>
+      <img src="${user.profilePic || 'https://via.placeholder.com/50?text=Profil'}" class="profile-pic" alt="profil" />
+      <strong>${u}${user.isVerified ? ' <span class="verified">✔️</span>' : ''}</strong>
+      <button onclick="toggleFollow('${u}')">${user.followers.includes(currentUser) ? 'Takipten Çıkar' : 'Takip Et'}</button>
+      <button onclick="showProfile('${u}')">Profili Gör</button>
     `;
     userListDiv.appendChild(div);
   });
 }
 
-// ---------- Akış Gösterimi ----------
+// ---------- Feed Gösterimi ----------
 
 function showFeed(type) {
   currentFeed = type;
@@ -567,69 +567,87 @@ function showFeed(type) {
 
 // ---------- Mesajlaşma ----------
 
+function showMessages() {
+  document.getElementById('feed').style.display = 'none';
+  document.getElementById('profile').style.display = 'none';
+  document.getElementById('users').style.display = 'none';
+  document.getElementById('messages').style.display = 'block';
+  loadUserSelect();
+}
+
 function loadUserSelect() {
   const users = loadUsers();
   const select = document.getElementById('chatUserSelect');
   select.innerHTML = '<option value="">Kullanıcı Seç</option>';
   Object.keys(users).forEach(u => {
-    if(u === currentUser) return;
-    const option = document.createElement('option');
-    option.value = u;
-    option.textContent = u + (users[u].isVerified ? ' ✔️' : '');
-    select.appendChild(option);
+    if(u !== currentUser) {
+      const user = users[u];
+      const option = document.createElement('option');
+      option.value = u;
+      option.textContent = u + (user.isVerified ? ' ✔️' : '');
+      select.appendChild(option);
+    }
   });
 }
 
-function loadChat(toUser) {
-  currentChatUser = toUser;
-  const messagesDiv = document.getElementById('messages');
-  if(!toUser) {
-    document.getElementById('messageList').innerHTML = '';
-    return;
-  }
-  document.getElementById('feed').style.display = 'none';
-  document.getElementById('profile').style.display = 'none';
-  document.getElementById('users').style.display = 'none';
-  messagesDiv.style.display = 'block';
+function loadChat(chatUser) {
+  currentChatUser = chatUser;
+  const messageListDiv = document.getElementById('messageList');
+  messageListDiv.innerHTML = '';
 
-  const users = loadUsers();
-  const msgs1 = users[currentUser].messages[toUser] || [];
-  const msgs2 = users[toUser].messages[currentUser] || [];
-  // Mesajları tarih sırasına göre karışık al (iki taraftan)
-  let allMsgs = msgs1.concat(msgs2);
-  allMsgs.sort((a,b)=>a.time - b.time);
+  if(!chatUser) return;
 
-  const listDiv = document.getElementById('messageList');
-  listDiv.innerHTML = '';
-  allMsgs.forEach(m=>{
-    const div = document.createElement('div');
-    div.className = 'message ' + (m.from === currentUser ? 'self' : 'other');
-    div.textContent = m.text;
-    listDiv.appendChild(div);
+  const messages = getMessagesBetween(currentUser, chatUser);
+
+  messages.forEach(m => {
+    const msgDiv = document.createElement('div');
+    msgDiv.className = 'message';
+    if(m.sender === currentUser) msgDiv.classList.add('self');
+    msgDiv.innerHTML = `<strong>${m.sender}</strong>: ${escapeHtml(m.text)}<br><small>${new Date(m.time).toLocaleString()}</small>`;
+    messageListDiv.appendChild(msgDiv);
   });
-  listDiv.scrollTop = listDiv.scrollHeight;
+
+  messageListDiv.scrollTop = messageListDiv.scrollHeight;
+}
+
+function getMessagesBetween(userA, userB) {
+  const users = loadUsers();
+  if(!users[userA] || !users[userB]) return [];
+  const msgsA = users[userA].messages[userB] || [];
+  const msgsB = users[userB].messages[userA] || [];
+  const messages = msgsA.concat(msgsB);
+  messages.sort((a,b) => a.time - b.time);
+  return messages;
 }
 
 function sendMessage() {
-  const text = document.getElementById('messageInput').value.trim();
-  if(!text) return;
-  if(!currentChatUser) return alert('Mesaj göndermek için kullanıcı seçin!');
+  const textArea = document.getElementById('messageInput');
+  const text = textArea.value.trim();
+  if(!text) return alert('Mesaj boş olamaz');
+  if(!currentChatUser) return alert('Mesaj göndermek için kullanıcı seçin');
+
   const users = loadUsers();
   const now = Date.now();
+
   if(!users[currentUser].messages[currentChatUser]) users[currentUser].messages[currentChatUser] = [];
-  users[currentUser].messages[currentChatUser].push({from: currentUser, to: currentChatUser, text, time: now});
+  users[currentUser].messages[currentChatUser].push({
+    sender: currentUser,
+    text: text,
+    time: now
+  });
+
+  if(!users[currentChatUser].messages[currentUser]) users[currentChatUser].messages[currentUser] = [];
+  users[currentChatUser].messages[currentUser].push({
+    sender: currentUser,
+    text: text,
+    time: now
+  });
+
   saveUsers(users);
-  document.getElementById('messageInput').value = '';
+  textArea.value = '';
   loadChat(currentChatUser);
 }
-
-// ---------- Sayfa Yüklenince ----------
-
-window.onload = () => {
-  init();
-};
 </script>
 
 </body>
 </html>
-
